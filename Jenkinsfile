@@ -2,36 +2,52 @@ pipeline {
     agent any
 
     tools {
-        nodejs "NodeJS" // Ensure this matches the name configured in Jenkins
+        maven 'Maven'
+    }
+
+    parameters {
+        string(name: 'BRANCH_NAME', defaultValue: 'main')
+        string(name: 'BUILD_ENV', defaultValue: 'dev')
+    }
+
+    environment {
+        NEW_VERSION = "1.3.0"
     }
 
     stages {
-        stage('Install Dependencies') {
+        stage('Build') {
             steps {
-                bat 'npm install'
+                echo "Building version ${NEW_VERSION} on branch ${params.BRANCH_NAME}"
+                //bat "mvn clean package -Dversion=${NEW_VERSION}"
             }
         }
-    stage('Run Jest Tests') {
+
+        stage('Unit Test') {
+            when {
+                expression { return params.BUILD_ENV == 'dev' }
+            }
             steps {
-                 bat 'npm test'
+                echo 'Running unit tests...'
             }
         }
-        stage('Run Server') {
+
+        stage('Deploy') {
             steps {
-                bat 'node server.js' // Adjust path to point to the correct location
+                echo 'Deploying application...'
             }
         }
     }
 
     post {
         always {
-            echo 'Pipeline execution completed.'
+            echo 'Cleaning up workspace...'
+           // deleteDir()
         }
         success {
-            echo 'Pipeline executed successfully.'
+            echo 'Pipeline succeeded.'
         }
         failure {
-            echo 'Pipeline execution failed.'
+            echo 'Pipeline failed.'
         }
     }
 }
